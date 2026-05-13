@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ALUMNI
+  ADMIN
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  email           String   @unique
+  passwordHash    String
+  role            Role     @default(ALUMNI)
+  isEmailVerified Boolean  @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  profile         Profile?
+  bids            Bid[]
+  tokens          Token[]
+}
+
+model Profile {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  firstName       String
+  lastName        String
+  biography       String?  @db.Text
+  linkedInUrl     String?
+  profileImageUrl String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  degrees         Degree[]
+  certifications  Certification[]
+  employments     EmploymentHistory[]
+}
+
+model Degree {
+  id             Int      @id @default(autoincrement())
+  profileId      Int
+  profile        Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  title          String
+  institution    String
+  completionDate DateTime @db.Date
+}
+
+model Certification {
+  id             Int      @id @default(autoincrement())
+  profileId      Int
+  profile        Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  title          String
+  awardingBody   String
+  completionDate DateTime @db.Date
+}
+
+model EmploymentHistory {
+  id             Int       @id @default(autoincrement())
+  profileId      Int
+  profile        Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  jobTitle       String
+  company        String
+  startDate      DateTime  @db.Date
+  endDate        DateTime? @db.Date
+}
+
+model Bid {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Float
+  targetDate  DateTime @db.Date
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, targetDate]) 
+}
+
+model Token {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  type      String   
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
